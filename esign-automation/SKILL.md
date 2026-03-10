@@ -1,7 +1,6 @@
 ---
 name: esign-automation
 description: Automate document signing workflows and operations using the eSignGlobal platform.
-metadata: {"openclaw":{"primaryEnv":"ESIGNGLOBAL_APIKEY"}}
 version: 1.4.0
 homepage: https://github.com/esign-cn-open-source/skills
 ---
