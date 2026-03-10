@@ -1,24 +1,178 @@
-# eSign Skills
+# eSign Automation Skill
 
-This repository contains automation skills for the **eSign electronic contract platform**.
+This project provides an skill for automating document signing workflows using the eSignGlobal platform.
+The skill enables AI agents to interact with eSignGlobal APIs to manage document signing processes, automate contract workflows, and retrieve signing results.
 
-eSign Skills enable AI agents and automation systems to interact with the eSign platform to automate document signing workflows and contract management processes.
+## Features
 
-## What Are eSign Skills?
+- send a local document for e-signature
+- support one or more signers
+- support sequential or parallel signing via `signOrder`
+- return structured JSON for easy automation and debugging
 
-eSign Skills are reusable automation capabilities that teach AI agents how to perform tasks on the eSign platform.
+## Project Structure
 
-Unlike simple prompts, these skills include:
+```text
+.
+|- SKILL.md
+`- scripts/
+   `- send_envelope.ts
+```
 
-- domain knowledge about electronic contract workflows
-- integration with eSign platform APIs
-- standardized automation procedures
-- reusable signing workflow logic
+## Prerequisites
 
-By packaging these capabilities as skills, AI agents can safely automate document signing and contract-related operations.
+- Node.js 18+
+- `npx tsx` available in your environment
+- a valid eSignGlobal app key
 
-## License
+If `tsx` is not already available, you can run it directly with `npx`.
 
-This repository is licensed under the [MIT License](https://github.com/claude-office-skills/skills/blob/main/LICENSE).
+## Configure Credentials
 
-Individual skills may have different licenses - check each skill's folder for specific terms.
+Set the `ESIGNGLOBAL_APIKEY` environment variable.
+
+### Windows PowerShell
+
+```powershell
+$env:ESIGNGLOBAL_APIKEY="yourAPIKEY"
+```
+
+### macOS / Linux
+
+```bash
+export ESIGNGLOBAL_APIKEY="yourAPIKEY"
+```
+
+If you do not have an app key yet:
+
+1. Sign in to `https://www.esignglobal.com`
+2. Go to `Settings -> Integration -> Apps`
+3. Create an application
+4. Copy the generated API Key
+
+## Usage
+
+Run the script with:
+
+```bash
+npx tsx scripts/send_envelope.ts send <filePath> <signersJson> [subject]
+```
+
+Parameters:
+
+- `filePath`: absolute path to the local file you want to send
+- `signersJson`: JSON array of signer objects
+- `subject`: optional envelope subject; if omitted, the file name without its extension is used first
+
+## Signer Format
+
+Each signer object supports:
+
+- `userName` (required)
+- `userEmail` (required)
+- `signOrder` (optional, integer >= 1)
+
+Single signer example:
+
+```json
+[
+  {
+    "userName": "Bob Smith",
+    "userEmail": "bob@example.com"
+  }
+]
+```
+
+Sequential signing example:
+
+```json
+[
+  {
+    "userName": "Bob Smith",
+    "userEmail": "bob@example.com",
+    "signOrder": 1
+  },
+  {
+    "userName": "Alice Jones",
+    "userEmail": "alice@example.com",
+    "signOrder": 2
+  }
+]
+```
+
+Parallel signing example:
+
+```json
+[
+  {
+    "userName": "Bob Smith",
+    "userEmail": "bob@example.com",
+    "signOrder": 1
+  },
+  {
+    "userName": "Alice Jones",
+    "userEmail": "alice@example.com",
+    "signOrder": 1
+  }
+]
+```
+
+## Examples
+
+### Send a PDF to one signer
+
+```bash
+npx tsx scripts/send_envelope.ts send "/absolute/path/contract.pdf" '[{"userName":"Bob Smith","userEmail":"bob@example.com"}]' "Please sign this contract"
+```
+
+If `subject` is omitted, `/absolute/path/contract.pdf` defaults to `contract`.
+
+### Send a document to multiple signers in sequence
+
+```bash
+npx tsx scripts/send_envelope.ts send "/absolute/path/agreement.pdf" '[{"userName":"Bob Smith","userEmail":"bob@example.com","signOrder":1},{"userName":"Alice Jones","userEmail":"alice@example.com","signOrder":2}]' "Approval workflow"
+```
+
+## Response Format
+
+Success example:
+
+```json
+{
+  "success": true,
+  "step": "send",
+  "message": "Envelope initiated successfully",
+  "data": {
+    "filePath": "/absolute/path/contract.pdf",
+    "fileKey": "file_key_here"
+  }
+}
+```
+
+Failure example:
+
+```json
+{
+  "success": false,
+  "step": "send",
+  "message": "Failed to execute envelope flow",
+  "error": "Missing environment variable ESIGNGLOBAL_APIKEY"
+}
+```
+
+## Troubleshooting
+
+- `Missing environment variable ESIGNGLOBAL_APIKEY`: set the app key before running the script
+- `File not found`: use an absolute path and confirm the file exists
+- `Invalid signersJson`: check that the JSON is valid and each signer has `userName` and `userEmail`
+- authentication or API errors: verify the app key, data center, and account permissions
+
+## Security
+
+- do not hardcode credentials in source files
+- do not print secrets in logs or terminal history
+- use trusted local documents only
+
+## Marketplace Packaging Notes
+
+For skill marketplaces, use `SKILL.md` as the main skill definition and include this `README.md` as the user-facing setup and usage guide.
